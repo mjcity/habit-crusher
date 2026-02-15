@@ -132,8 +132,8 @@ export default function DashboardPage() {
       </section>
 
       {open && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
-          <form onSubmit={submit} className="max-h-[85vh] w-full max-w-md overflow-y-auto border-4 border-black bg-white p-4 shadow-[8px_8px_0_#000]">
+        <div className="fixed inset-0 z-50 grid items-start justify-items-center overflow-y-auto bg-black/40 p-4 pt-8 md:place-items-center">
+          <form onSubmit={submit} className="w-full max-w-md border-4 border-black bg-white p-4 shadow-[8px_8px_0_#000]">
             <h3 className="text-xl font-black">{editingId ? 'Edit Habit' : 'Add Habit'}</h3>
             <input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="Habit name" className="mt-3 w-full border-4 border-black px-3 py-2" required />
             <select value={form.color} onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))} className="mt-3 w-full border-4 border-black px-3 py-2">
@@ -144,8 +144,8 @@ export default function DashboardPage() {
             </select>
 
             <input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Habit description / notes" className="mt-3 w-full border-4 border-black px-3 py-2" />
-            <input type="date" value={form.targetDate} onChange={(e) => setForm((p) => ({ ...p, targetDate: e.target.value }))} className="mt-3 w-full border-4 border-black px-3 py-2" />
-            <button type="button" onClick={() => navigate(`/calendar?habit=${editingId || ''}`)} className="mt-3 w-full border-4 border-black bg-yellow-200 px-3 py-2 font-black">Open Calendar for this Habit</button>
+            <input type="date" value={form.targetDate} onChange={(e) => setForm((p) => ({ ...p, targetDate: e.target.value }))} className="mt-3 h-12 w-full max-w-full appearance-none border-4 border-black bg-white px-3 py-2" />
+            {editingId && <button type="button" onClick={() => navigate(`/calendar?habit=${editingId}`)} className="mt-3 w-full border-4 border-black bg-yellow-200 px-3 py-2 font-black">Open Calendar for this Habit</button>}
 
             {editingId && (
               <>
