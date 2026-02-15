@@ -54,7 +54,7 @@ export function HabitProvider({ children }) {
     };
   }, []);
 
-  const createHabit = async ({ name, color }) => {
+  const createHabit = async ({ name, color, description, targetDate }) => {
     const cleanName = name?.trim();
     if (!cleanName) throw new Error('Habit name is required');
 
@@ -69,7 +69,7 @@ export function HabitProvider({ children }) {
         streak_count: 0,
         best_streak: 0,
         completion_history: [],
-        details: { progress: 0, points: 0, notes: '', media: null }
+        details: { progress: 0, points: 0, notes: '', media: null, description: description || '', targetDate: targetDate || '' }
       };
       const { data, error } = await supabase.from('habits').insert(payload).select().single();
       if (error) throw error;

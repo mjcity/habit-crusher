@@ -10,7 +10,7 @@ const colors = {
   green: 'bg-green-300'
 };
 
-const emptyForm = { name: '', color: 'yellow', progress: 0, points: 0, notes: '', media: null };
+const emptyForm = { name: '', color: 'yellow', description: '', targetDate: '', progress: 0, points: 0, notes: '', media: null };
 
 export default function DashboardPage() {
   const { habits, createHabit, updateHabit, markComplete } = useHabits();
@@ -37,6 +37,8 @@ export default function DashboardPage() {
     setForm({
       name: habit.name,
       color: habit.color,
+      description: habit.details?.description || '',
+      targetDate: habit.details?.targetDate || '',
       progress: Number(habit.details?.progress || 0),
       points: Number(habit.details?.points || 0),
       notes: habit.details?.notes || '',
@@ -51,10 +53,10 @@ export default function DashboardPage() {
       await updateHabit(editingId, {
         name: form.name,
         color: form.color,
-        details: { progress: Number(form.progress || 0), points: Number(form.points || 0), notes: form.notes, media: form.media }
+        details: { progress: Number(form.progress || 0), points: Number(form.points || 0), notes: form.notes, media: form.media, description: form.description, targetDate: form.targetDate }
       });
     } else {
-      await createHabit({ name: form.name, color: form.color });
+      await createHabit({ name: form.name, color: form.color, description: form.description, targetDate: form.targetDate });
     }
     setOpen(false);
     setEditingId(null);
@@ -85,6 +87,8 @@ export default function DashboardPage() {
             return (
               <article key={habit.id} className={`border-4 border-black p-4 shadow-[6px_6px_0_#000] ${colors[habit.color] || colors.yellow}`}>
                 <h4 className="text-xl font-black">{habit.name}</h4>
+                {details.description && <p className="mb-1 font-semibold">{details.description}</p>}
+                {details.targetDate && <p className="mb-1 text-sm font-bold">Target Date: {details.targetDate}</p>}
                 <p className="font-bold">Current Streak: {habit.streakCount}</p>
                 <p className="font-bold">Best Streak: {habit.bestStreak}</p>
                 <p className="font-bold">Progress: {Number(details.progress || 0)}%</p>
@@ -132,6 +136,10 @@ export default function DashboardPage() {
               <option value="red">Red</option>
               <option value="green">Green</option>
             </select>
+
+            <input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Habit description / notes" className="mt-3 w-full border-4 border-black px-3 py-2" />
+            <input type="date" value={form.targetDate} onChange={(e) => setForm((p) => ({ ...p, targetDate: e.target.value }))} className="mt-3 w-full border-4 border-black px-3 py-2" />
+            <button type="button" onClick={() => navigate(`/calendar?habit=${editingId || ''}`)} className="mt-3 w-full border-4 border-black bg-yellow-200 px-3 py-2 font-black">Open Calendar for this Habit</button>
 
             {editingId && (
               <>
