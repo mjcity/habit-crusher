@@ -42,6 +42,7 @@ export function HabitProvider({ children }) {
           bestStreak: h.best_streak || 0,
           lastCompletedDate: h.last_completed_date || null,
           completionHistory: h.completion_history || [],
+          details: h.details || { progress: 0, points: 0, notes: '', media: null },
           createdAt: new Date(h.created_at).getTime()
         })));
       }
@@ -67,7 +68,8 @@ export function HabitProvider({ children }) {
         color: color || 'yellow',
         streak_count: 0,
         best_streak: 0,
-        completion_history: []
+        completion_history: [],
+        details: { progress: 0, points: 0, notes: '', media: null }
       };
       const { data, error } = await supabase.from('habits').insert(payload).select().single();
       if (error) throw error;
@@ -80,10 +82,33 @@ export function HabitProvider({ children }) {
         bestStreak: data.best_streak || 0,
         lastCompletedDate: data.last_completed_date || null,
         completionHistory: data.completion_history || [],
+        details: data.details || { progress: 0, points: 0, notes: '', media: null },
         createdAt: new Date(data.created_at).getTime()
       }, ...prev]);
       return;
     }
+  };
+
+  const updateHabit = async (id, updates) => {
+    const habit = habits.find((h) => h.id === id);
+    if (!habit) return;
+
+    const nextDetails = { ...(habit.details || {}), ...(updates.details || {}) };
+    const payload = {
+      name: updates.name ?? habit.name,
+      color: updates.color ?? habit.color,
+      details: nextDetails
+    };
+
+    const { data, error } = await supabase.from('habits').update(payload).eq('id', id).select().single();
+    if (error) throw error;
+
+    setHabits((prev) => prev.map((h) => h.id === id ? {
+      ...h,
+      name: data.name,
+      color: data.color,
+      details: data.details || nextDetails
+    } : h));
   };
 
   const markComplete = async (id) => {
@@ -98,11 +123,17 @@ export function HabitProvider({ children }) {
     const completionHistory = Array.from(historySet).sort();
 
     if (supabaseEnabled) {
+      const existingDetails = habit.details || { progress: 0, points: 0 };
       const payload = {
         streak_count: streak,
         best_streak: best,
         last_completed_date: today,
-        completion_history: completionHistory
+        completion_history: completionHistory,
+        details: {
+          ...existingDetails,
+          progress: Math.min(100, Number(existingDetails.progress || 0) + 10),
+          points: Number(existingDetails.points || 0) + 10
+        }
       };
       const { data, error } = await supabase.from('habits').update(payload).eq('id', id).select().single();
       if (error) throw error;
@@ -111,11 +142,13 @@ export function HabitProvider({ children }) {
         streakCount: data.streak_count,
         bestStreak: data.best_streak,
         lastCompletedDate: data.last_completed_date,
-        completionHistory: data.completion_history || []
+        completionHistory: data.completion_history || [],
+        details: data.details || h.details
       } : h));
       return;
     }
   };
 
-  return <HabitContext.Provider value={useMemo(() => ({ habits, loading, createHabit, markComplete }), [habits, loading])}>{children}</HabitContext.Provider>;
+  return <HabitContext.Provider value={useMemo(() => ({ habits, loading, createHabit, updateHabit, markComplete }), [habits, loading])}>{children}</HabitContext.Provider>;
 }
+

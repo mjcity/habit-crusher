@@ -7,8 +7,11 @@ create table if not exists public.habits (
   best_streak integer not null default 0,
   last_completed_date date,
   completion_history jsonb not null default '[]'::jsonb,
+  details jsonb not null default '{}'::jsonb,
   created_at timestamptz default now()
 );
+
+alter table public.habits add column if not exists details jsonb not null default '{}'::jsonb;
 
 alter table public.habits enable row level security;
 
