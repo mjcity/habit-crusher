@@ -111,6 +111,25 @@ export function HabitProvider({ children }) {
     } : h));
   };
 
+  const deleteHabit = async (id) => {
+    const { error } = await supabase.from('habits').delete().eq('id', id);
+    if (error) throw error;
+    setHabits((prev) => prev.filter((h) => h.id !== id));
+  };
+
+  const clearCompletedHistory = async (id) => {
+    const habit = habits.find((h) => h.id === id);
+    if (!habit) return;
+    const payload = {
+      streak_count: 0,
+      last_completed_date: null,
+      completion_history: []
+    };
+    const { data, error } = await supabase.from('habits').update(payload).eq('id', id).select().single();
+    if (error) throw error;
+    setHabits((prev) => prev.map((h) => h.id === id ? { ...h, streakCount: data.streak_count || 0, lastCompletedDate: null, completionHistory: [] } : h));
+  };
+
   const markComplete = async (id) => {
     const today = isoDay();
     const habit = habits.find((h) => h.id === id);
@@ -149,6 +168,6 @@ export function HabitProvider({ children }) {
     }
   };
 
-  return <HabitContext.Provider value={useMemo(() => ({ habits, loading, createHabit, updateHabit, markComplete }), [habits, loading])}>{children}</HabitContext.Provider>;
+  return <HabitContext.Provider value={useMemo(() => ({ habits, loading, createHabit, updateHabit, deleteHabit, clearCompletedHistory, markComplete }), [habits, loading])}>{children}</HabitContext.Provider>;
 }
 
