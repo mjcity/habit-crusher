@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useHabits } from '../hooks/useHabits';
 
@@ -21,17 +22,34 @@ function monthCells(base) {
 
 export default function CalendarPage() {
   const { habits, updateHabit } = useHabits();
+  const [searchParams] = useSearchParams();
   const [current, setCurrent] = useState(new Date());
   const [selectedHabitId, setSelectedHabitId] = useState('');
   const [selectedDate, setSelectedDate] = useState(keyFor(new Date()));
   const [form, setForm] = useState({ achieved: '', notes: '', media: null });
   const [mediaError, setMediaError] = useState('');
 
+  useEffect(() => {
+    if (!habits.length) return;
+    const fromQuery = searchParams.get('habit');
+    if (fromQuery && habits.some((h) => h.id === fromQuery)) {
+      setSelectedHabitId(fromQuery);
+      return;
+    }
+    if (!selectedHabitId) setSelectedHabitId(habits[0].id);
+  }, [habits, searchParams, selectedHabitId]);
+
   const selectedHabit = habits.find((h) => h.id === selectedHabitId) || habits[0];
 
   const cells = useMemo(() => monthCells(current), [current]);
 
   const entries = selectedHabit?.details?.entries || {};
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    const entry = entries[selectedDate] || { achieved: '', notes: '', media: null };
+    setForm(entry);
+  }, [selectedDate, selectedHabitId]);
 
   const loadDay = (dateKey) => {
     setSelectedDate(dateKey);
@@ -87,7 +105,7 @@ export default function CalendarPage() {
           <button className="border-4 border-black bg-white px-3 py-1 font-black" onClick={() => setCurrent(new Date(current.getFullYear(), current.getMonth() + 1, 1))}>→</button>
         </div>
 
-        <select className="mb-4 w-full border-4 border-black px-3 py-2 font-bold" value={selectedHabitId || selectedHabit?.id || ''} onChange={(e) => setSelectedHabitId(e.target.value)}>
+        <select className="mb-4 w-full border-4 border-black px-3 py-2 font-bold" value={selectedHabitId || selectedHabit?.id || ''} onChange={(e) => { setSelectedHabitId(e.target.value); setForm({ achieved: '', notes: '', media: null }); }}>
           {habits.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
         </select>
 
@@ -109,6 +127,7 @@ export default function CalendarPage() {
 
       <section className="border-4 border-black bg-[#ffef99] p-4 shadow-[6px_6px_0_#000]">
         <h3 className="text-xl font-black">{selectedDate}</h3>
+        {selectedHabit && <p className="font-bold">Habit: {selectedHabit.name}</p>}
         <input className="mt-3 w-full border-4 border-black px-3 py-2" placeholder="What did you achieve?" value={form.achieved || ''} onChange={(e) => setForm((p) => ({ ...p, achieved: e.target.value }))} />
         <textarea className="mt-3 w-full border-4 border-black px-3 py-2" rows={3} placeholder="Add notes" value={form.notes || ''} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} />
 

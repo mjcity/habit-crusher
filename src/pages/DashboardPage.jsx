@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useHabits } from '../hooks/useHabits';
 
@@ -13,6 +14,7 @@ const emptyForm = { name: '', color: 'yellow', progress: 0, points: 0, notes: ''
 
 export default function DashboardPage() {
   const { habits, createHabit, updateHabit, markComplete } = useHabits();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -107,9 +109,10 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="grid gap-2 sm:grid-cols-3">
                   <button onClick={() => markComplete(habit.id)} className="border-4 border-black bg-white px-3 py-2 font-black shadow-[4px_4px_0_#000]">Mark Complete</button>
                   <button onClick={() => openEdit(habit)} className="border-4 border-black bg-blue-300 px-3 py-2 font-black shadow-[4px_4px_0_#000]">Edit Habit</button>
+                  <button onClick={() => navigate(`/calendar?habit=${habit.id}`)} className="border-4 border-black bg-yellow-200 px-3 py-2 font-black shadow-[4px_4px_0_#000]">Calendar</button>
                 </div>
               </article>
             );
