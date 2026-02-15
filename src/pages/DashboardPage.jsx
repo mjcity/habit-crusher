@@ -18,13 +18,19 @@ export default function DashboardPage() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
-  const today = new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const daysSoFar = now.getDate();
 
   const successRate = useMemo(() => {
     if (!habits.length) return 0;
-    const done = habits.filter((h) => h.lastCompletedDate === today).length;
-    return Math.round((done / habits.length) * 100);
-  }, [habits, today]);
+    const completionsThisMonth = habits.reduce((sum, h) => {
+      const monthly = (h.completionHistory || []).filter((d) => d.startsWith(monthKey)).length;
+      return sum + monthly;
+    }, 0);
+    const maxPossible = habits.length * daysSoFar;
+    return maxPossible ? Math.round((completionsThisMonth / maxPossible) * 100) : 0;
+  }, [habits, monthKey, daysSoFar]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -73,10 +79,10 @@ export default function DashboardPage() {
   };
 
   return (
-    <Layout onAdd={openCreate} title="Dashboard" subtitle={`${successRate}% Success Rate`}>
+    <Layout onAdd={openCreate} title="Dashboard" subtitle={`${successRate}% Monthly Success Rate`}>
       <section className="mb-5 border-4 border-black bg-[#ffef99] p-4 shadow-[6px_6px_0_#000]">
-        <h3 className="text-2xl font-black">Daily Progress</h3>
-        <p className="font-bold">{successRate}% Success Rate</p>
+        <h3 className="text-2xl font-black">Monthly Progress</h3>
+        <p className="font-bold">{successRate}% Monthly Success Rate</p>
       </section>
 
       <section>
