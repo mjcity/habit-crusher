@@ -1,4 +1,4 @@
-import { FaChartColumn, FaHammer, FaSliders } from 'react-icons/fa6';
+import { FaCalendarDays, FaChartColumn, FaHammer, FaSliders } from 'react-icons/fa6';
 import { NavLink } from 'react-router-dom';
 
 const itemClass = ({ isActive }) =>
@@ -11,6 +11,7 @@ export default function Sidebar() {
       <nav className="space-y-3 text-sm">
         <NavLink to="/dashboard" className={itemClass}><FaHammer /> Dashboard</NavLink>
         <NavLink to="/progress" className={itemClass}><FaChartColumn /> Progress</NavLink>
+        <NavLink to="/calendar" className={itemClass}><FaCalendarDays /> Calendar</NavLink>
         <NavLink to="/settings" className={itemClass}><FaSliders /> Settings</NavLink>
       </nav>
     </aside>

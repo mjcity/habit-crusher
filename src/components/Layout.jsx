@@ -19,6 +19,7 @@ export default function Layout({ children, onAdd, title, subtitle, showAdd = tru
               <nav className="grid gap-2">
                 <NavLink to="/dashboard" className={mobileItemClass} onClick={() => setMobileMenuOpen(false)}>Dashboard</NavLink>
                 <NavLink to="/progress" className={mobileItemClass} onClick={() => setMobileMenuOpen(false)}>Progress</NavLink>
+                <NavLink to="/calendar" className={mobileItemClass} onClick={() => setMobileMenuOpen(false)}>Calendar</NavLink>
                 <NavLink to="/settings" className={mobileItemClass} onClick={() => setMobileMenuOpen(false)}>Settings</NavLink>
               </nav>
             </div>
