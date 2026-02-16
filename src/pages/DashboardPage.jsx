@@ -10,7 +10,8 @@ const colors = {
   green: 'bg-green-300'
 };
 
-const emptyForm = { name: '', color: 'yellow', description: '', targetDate: '', progress: 0, points: 0, notes: '', media: null };
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const emptyForm = { name: '', color: 'yellow', description: '', targetDate: todayKey(), progress: 0, points: 0, notes: '', media: null };
 
 export default function DashboardPage() {
   const { habits, createHabit, updateHabit, deleteHabit, clearCompletedHistory, markComplete } = useHabits();
@@ -34,7 +35,7 @@ export default function DashboardPage() {
 
   const openCreate = () => {
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, targetDate: todayKey() });
     setOpen(true);
   };
 
@@ -44,7 +45,7 @@ export default function DashboardPage() {
       name: habit.name,
       color: habit.color,
       description: habit.details?.description || '',
-      targetDate: habit.details?.targetDate || '',
+      targetDate: habit.details?.targetDate || todayKey(),
       progress: Number(habit.details?.progress || 0),
       points: Number(habit.details?.points || 0),
       notes: habit.details?.notes || '',
@@ -66,7 +67,7 @@ export default function DashboardPage() {
     }
     setOpen(false);
     setEditingId(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, targetDate: todayKey() });
   };
 
   const onPickMedia = (file) => {
