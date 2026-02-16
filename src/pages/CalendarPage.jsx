@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useHabits } from '../hooks/useHabits';
 
@@ -22,6 +22,7 @@ function monthCells(base) {
 
 export default function CalendarPage() {
   const { habits, updateHabit } = useHabits();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [current, setCurrent] = useState(new Date());
   const [selectedHabitId, setSelectedHabitId] = useState('');
@@ -63,6 +64,7 @@ export default function CalendarPage() {
     const details = selectedHabit.details || {};
     const nextEntries = { ...(details.entries || {}), [selectedDate]: form };
     await updateHabit(selectedHabit.id, { details: { ...details, entries: nextEntries } });
+    navigate('/dashboard');
   };
 
   const onPickMedia = (file) => {
@@ -109,6 +111,7 @@ export default function CalendarPage() {
           {habits.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
         </select>
 
+        <h4 className="mb-2 text-lg font-black">Habit Calendar</h4>
         <div className="grid grid-cols-7 gap-2 text-center text-xs font-black">{week.map((d) => <div key={d}>{d}</div>)}</div>
         <div className="mt-2 grid grid-cols-7 gap-2">
           {cells.map((d) => {
@@ -116,9 +119,9 @@ export default function CalendarPage() {
             const inMonth = d.getMonth() === current.getMonth();
             const hasEntry = !!entries[k]?.achieved || !!entries[k]?.notes || !!entries[k]?.media;
             return (
-              <button key={k} onClick={() => loadDay(k)} className={`min-h-16 border-4 border-black p-2 text-left font-bold ${inMonth ? 'bg-white' : 'bg-slate-100'} ${selectedDate === k ? 'ring-2 ring-blue-500' : ''}`}>
+              <button key={k} onClick={() => loadDay(k)} className={`relative min-h-16 border-4 border-black p-2 pb-6 text-left font-bold ${inMonth ? 'bg-white' : 'bg-slate-100'} ${selectedDate === k ? 'ring-2 ring-blue-500' : ''}`}>
                 <div>{d.getDate()}</div>
-                {hasEntry && <div className="mt-1 inline-block bg-green-300 px-1 text-[10px]">Saved</div>}
+                {hasEntry && <div className="absolute bottom-1 left-1 rounded bg-green-300 px-1.5 py-0.5 text-[10px] leading-none">Saved</div>}
               </button>
             );
           })}
@@ -126,13 +129,15 @@ export default function CalendarPage() {
       </section>
 
       <section className="border-4 border-black bg-[#ffef99] p-4 shadow-[6px_6px_0_#000]">
-        <h3 className="text-xl font-black">{selectedDate}</h3>
+        <h3 className="text-xl font-black">Calendar Day Entry • {selectedDate}</h3>
         {selectedHabit && <p className="font-bold">Habit: {selectedHabit.name}</p>}
-        <input className="mt-3 w-full border-4 border-black px-3 py-2" placeholder="What did you achieve?" value={form.achieved || ''} onChange={(e) => setForm((p) => ({ ...p, achieved: e.target.value }))} />
-        <textarea className="mt-3 w-full border-4 border-black px-3 py-2" rows={3} placeholder="Add notes" value={form.notes || ''} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} />
+        <label className="mt-3 block text-sm font-black">Achievement</label>
+        <input className="mt-1 w-full border-4 border-black px-3 py-2" placeholder="What did you achieve?" value={form.achieved || ''} onChange={(e) => setForm((p) => ({ ...p, achieved: e.target.value }))} />
+        <label className="mt-3 block text-sm font-black">Calendar Notes</label>
+        <textarea className="mt-1 w-full border-4 border-black px-3 py-2" rows={3} placeholder="Add notes for this date" value={form.notes || ''} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} />
 
         <label className="mt-3 block border-4 border-black bg-white px-3 py-2 font-black cursor-pointer">
-          Add picture or 10s video
+          Calendar Proof (picture or 10s video)
           <input type="file" accept="image/*,video/*" className="hidden" onChange={(e) => onPickMedia(e.target.files?.[0])} />
         </label>
         {mediaError && <p className="mt-2 font-bold text-red-700">{mediaError}</p>}
