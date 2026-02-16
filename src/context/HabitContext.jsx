@@ -11,6 +11,20 @@ function computeStreak(habit, today) {
   if (!last) return { streak: 1, best: Math.max(1, habit.bestStreak || 0) };
   const diff = dayDiff(today, last);
   if (diff === 0) return { streak: habit.streakCount || 0, best: habit.bestStreak || 0, alreadyDone: true };
+
+  if (diff > 1) {
+    const tokens = Number(habit.details?.freezeTokens || 0);
+    if (tokens > 0) {
+      const recovered = (habit.streakCount || 0) + 1;
+      return {
+        streak: recovered,
+        best: Math.max(recovered, habit.bestStreak || 0),
+        usedFreeze: true,
+        nextFreezeTokens: tokens - 1
+      };
+    }
+  }
+
   const nextStreak = diff === 1 ? (habit.streakCount || 0) + 1 : 1;
   return { streak: nextStreak, best: Math.max(nextStreak, habit.bestStreak || 0) };
 }
@@ -42,7 +56,7 @@ export function HabitProvider({ children }) {
           bestStreak: h.best_streak || 0,
           lastCompletedDate: h.last_completed_date || null,
           completionHistory: h.completion_history || [],
-          details: h.details || { progress: 0, points: 0, notes: '', media: null },
+          details: h.details || { progress: 0, points: 0, notes: '', media: null, freezeTokens: 2, reminderEnabled: false, reminderTime: '20:00', reminderDays: [1,2,3,4,5,6,0] },
           createdAt: new Date(h.created_at).getTime()
         })));
       }
@@ -69,7 +83,19 @@ export function HabitProvider({ children }) {
         streak_count: 0,
         best_streak: 0,
         completion_history: [],
-        details: { progress: 0, points: 0, notes: '', media: null, description: description || '', targetDate: targetDate || '' }
+        details: {
+          progress: 0,
+          points: 0,
+          notes: '',
+          media: null,
+          description: description || '',
+          targetDate: targetDate || '',
+          freezeTokens: 2,
+          reminderEnabled: false,
+          reminderTime: '20:00',
+          reminderDays: [1,2,3,4,5,6,0],
+          badges: []
+        }
       };
       const { data, error } = await supabase.from('habits').insert(payload).select().single();
       if (error) throw error;
@@ -82,7 +108,7 @@ export function HabitProvider({ children }) {
         bestStreak: data.best_streak || 0,
         lastCompletedDate: data.last_completed_date || null,
         completionHistory: data.completion_history || [],
-        details: data.details || { progress: 0, points: 0, notes: '', media: null },
+        details: data.details || { progress: 0, points: 0, notes: '', media: null, freezeTokens: 2, reminderEnabled: false, reminderTime: '20:00', reminderDays: [1,2,3,4,5,6,0], badges: [] },
         createdAt: new Date(data.created_at).getTime()
       }, ...prev]);
       return;
@@ -135,14 +161,19 @@ export function HabitProvider({ children }) {
     const habit = habits.find((h) => h.id === id);
     if (!habit) return;
 
-    const { streak, best, alreadyDone } = computeStreak(habit, today);
+    const { streak, best, alreadyDone, usedFreeze, nextFreezeTokens } = computeStreak(habit, today);
     if (alreadyDone) return;
 
     const historySet = new Set([...(habit.completionHistory || []), today]);
     const completionHistory = Array.from(historySet).sort();
 
     if (supabaseEnabled) {
-      const existingDetails = habit.details || { progress: 0, points: 0 };
+      const existingDetails = habit.details || { progress: 0, points: 0, badges: [] };
+      const nextPoints = Number(existingDetails.points || 0) + 10;
+      const badges = new Set(existingDetails.badges || []);
+      if (streak >= 7) badges.add('7-day streak');
+      if (streak >= 30) badges.add('30-day streak');
+      if (nextPoints >= 100) badges.add('100 XP');
       const payload = {
         streak_count: streak,
         best_streak: best,
@@ -151,7 +182,10 @@ export function HabitProvider({ children }) {
         details: {
           ...existingDetails,
           progress: Math.min(100, Number(existingDetails.progress || 0) + 10),
-          points: Number(existingDetails.points || 0) + 10
+          points: nextPoints,
+          badges: Array.from(badges),
+          freezeTokens: usedFreeze ? nextFreezeTokens : Number(existingDetails.freezeTokens || 0),
+          lastFreezeUsedAt: usedFreeze ? today : existingDetails.lastFreezeUsedAt || null
         }
       };
       const { data, error } = await supabase.from('habits').update(payload).eq('id', id).select().single();

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useHabits } from '../hooks/useHabits';
@@ -11,7 +11,7 @@ const colors = {
 };
 
 const todayKey = () => new Date().toISOString().slice(0, 10);
-const emptyForm = { name: '', color: 'yellow', description: '', targetDate: todayKey(), progress: 0, points: 0, notes: '', media: null };
+const emptyForm = { name: '', color: 'yellow', description: '', targetDate: todayKey(), progress: 0, points: 0, notes: '', media: null, reminderEnabled: false, reminderTime: '20:00' };
 
 export default function DashboardPage() {
   const { habits, createHabit, updateHabit, deleteHabit, clearCompletedHistory, markComplete } = useHabits();
@@ -33,6 +33,55 @@ export default function DashboardPage() {
     return maxPossible ? Math.round((completionsThisMonth / maxPossible) * 100) : 0;
   }, [habits, monthKey, daysSoFar]);
 
+  const weeklyReview = useMemo(() => {
+    const since = new Date();
+    since.setDate(since.getDate() - 6);
+    const scored = habits.map((h) => ({
+      name: h.name,
+      count: (h.completionHistory || []).filter((d) => new Date(d) >= since).length
+    }));
+    const sorted = [...scored].sort((a, b) => b.count - a.count);
+    const best = sorted[0];
+    const needsHelp = sorted[sorted.length - 1];
+    return {
+      best,
+      needsHelp,
+      text: best ? `Best this week: ${best.name} (${best.count} wins). Focus next on ${needsHelp?.name || 'consistency'} with a better reminder time.` : 'Complete a habit to generate your weekly AI-style review.'
+    };
+  }, [habits]);
+
+  const mediaTimeline = useMemo(() => {
+    return habits
+      .flatMap((h) => {
+        const fromEdit = h.details?.media ? [{ date: h.details?.targetDate || 'No date', type: h.details.media.type, dataUrl: h.details.media.dataUrl, habit: h.name }] : [];
+        const fromCalendar = Object.entries(h.details?.entries || {})
+          .filter(([, v]) => !!v?.media?.dataUrl)
+          .map(([date, v]) => ({ date, type: v.media.type, dataUrl: v.media.dataUrl, habit: h.name }));
+        return [...fromEdit, ...fromCalendar];
+      })
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, 12);
+  }, [habits]);
+
+  useEffect(() => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') Notification.requestPermission();
+    const t = setInterval(() => {
+      const now = new Date();
+      const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const today = now.toISOString().slice(0, 10);
+      habits.forEach((h) => {
+        const d = h.details || {};
+        if (!d.reminderEnabled || d.reminderTime !== hhmm) return;
+        const alreadyDone = (h.completionHistory || []).includes(today);
+        if (!alreadyDone && Notification.permission === 'granted') {
+          new Notification(`Habit reminder: ${h.name}`, { body: 'You still have this habit pending today.' });
+        }
+      });
+    }, 60000);
+    return () => clearInterval(t);
+  }, [habits]);
+
   const openCreate = () => {
     setEditingId(null);
     setForm({ ...emptyForm, targetDate: todayKey() });
@@ -49,7 +98,9 @@ export default function DashboardPage() {
       progress: Number(habit.details?.progress || 0),
       points: Number(habit.details?.points || 0),
       notes: habit.details?.notes || '',
-      media: habit.details?.media || null
+      media: habit.details?.media || null,
+      reminderEnabled: !!habit.details?.reminderEnabled,
+      reminderTime: habit.details?.reminderTime || '20:00'
     });
     setOpen(true);
   };
@@ -60,7 +111,7 @@ export default function DashboardPage() {
       await updateHabit(editingId, {
         name: form.name,
         color: form.color,
-        details: { progress: Number(form.progress || 0), points: Number(form.points || 0), notes: form.notes, media: form.media, description: form.description, targetDate: form.targetDate }
+        details: { progress: Number(form.progress || 0), points: Number(form.points || 0), notes: form.notes, media: form.media, description: form.description, targetDate: form.targetDate, reminderEnabled: !!form.reminderEnabled, reminderTime: form.reminderTime }
       });
     } else {
       await createHabit({ name: form.name, color: form.color, description: form.description, targetDate: form.targetDate });
@@ -86,6 +137,24 @@ export default function DashboardPage() {
         <p className="font-bold">{successRate}% Monthly Success Rate</p>
       </section>
 
+      <section className="mb-5 border-4 border-black bg-white p-4 shadow-[6px_6px_0_#000]">
+        <h3 className="text-xl font-black">Weekly AI Review</h3>
+        <p className="font-semibold">{weeklyReview.text}</p>
+      </section>
+
+      <section className="mb-5 border-4 border-black bg-white p-4 shadow-[6px_6px_0_#000]">
+        <h3 className="mb-3 text-xl font-black">Media Timeline</h3>
+        {!mediaTimeline.length && <p className="font-semibold">No proof uploaded yet.</p>}
+        <div className="grid gap-3 sm:grid-cols-2">
+          {mediaTimeline.map((m, i) => (
+            <div key={`${m.habit}-${m.date}-${i}`} className="border-4 border-black bg-slate-50 p-2">
+              <p className="text-xs font-bold">{m.date} • {m.habit}</p>
+              {m.type?.startsWith('video/') ? <video src={m.dataUrl} controls className="mt-1 max-h-40 w-full" /> : <img src={m.dataUrl} alt="proof" className="mt-1 max-h-40 w-full object-cover" />}
+            </div>
+          ))}
+        </div>
+      </section>
+
       <section>
         <h3 className="mb-3 text-2xl font-black">Your Habits</h3>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -99,7 +168,9 @@ export default function DashboardPage() {
                 <p className="font-bold">Current Streak: {habit.streakCount}</p>
                 <p className="font-bold">Best Streak: {habit.bestStreak}</p>
                 <p className="font-bold">Progress: {Number(details.progress || 0)}%</p>
-                <p className="mb-2 font-bold">Points: {Number(details.points || 0)}</p>
+                <p className="font-bold">Points: {Number(details.points || 0)} · Level {Math.floor(Number(details.points || 0) / 100) + 1}</p>
+                <p className="mb-2 text-sm font-bold">Freeze Tokens: {Number(details.freezeTokens || 0)}</p>
+                {!!(details.badges || []).length && <p className="mb-2 text-xs font-bold">Badges: {(details.badges || []).join(' • ')}</p>}
 
                 <input
                   type="range"
@@ -165,6 +236,9 @@ export default function DashboardPage() {
 
                 <label className="mt-3 block text-sm font-bold">Notes</label>
                 <textarea value={form.notes} onChange={(e) => setForm((p) => ({ ...p, notes: e.target.value }))} className="w-full border-4 border-black px-3 py-2" rows={3} placeholder="Progress notes" />
+
+                <label className="mt-3 flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={!!form.reminderEnabled} onChange={(e) => setForm((p) => ({ ...p, reminderEnabled: e.target.checked }))} /> Smart reminder</label>
+                <input type="time" value={form.reminderTime} onChange={(e) => setForm((p) => ({ ...p, reminderTime: e.target.value }))} className="w-full border-4 border-black px-3 py-2" />
 
                 <label className="mt-3 block border-4 border-black bg-white px-3 py-2 font-bold cursor-pointer">
                   Add Photo/Video Proof
