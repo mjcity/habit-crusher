@@ -148,7 +148,8 @@ export default function DashboardPage() {
             </select>
 
             <input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Habit description / notes" className="mt-3 w-full border-4 border-black px-3 py-2" />
-            <input type="date" value={form.targetDate} onChange={(e) => setForm((p) => ({ ...p, targetDate: e.target.value }))} className="mt-3 h-12 w-full max-w-full appearance-none border-4 border-black bg-white px-3 py-2" />
+            <label className="mt-3 block text-sm font-black">Target End Date</label>
+            <input type="date" value={form.targetDate} onChange={(e) => setForm((p) => ({ ...p, targetDate: e.target.value }))} className="mt-1 h-12 w-full max-w-full appearance-none border-4 border-black bg-white px-3 py-2" />
             {editingId && <button type="button" onClick={() => navigate(`/calendar?habit=${editingId}`)} className="mt-3 w-full border-4 border-black bg-yellow-200 px-3 py-2 font-black">Open Calendar for this Habit</button>}
 
             {editingId && (
