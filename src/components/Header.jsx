@@ -28,7 +28,7 @@ export default function Header({ onAdd, onToggleMobileMenu, title, subtitle, sho
             <span className="hidden max-w-[180px] truncate md:inline">{currentUser?.name}</span>
           </button>
           {profileOpen && (
-            <div className="absolute left-0 z-40 mt-2 w-64 max-w-[calc(100vw-2rem)] border-4 border-black bg-white p-2 shadow-[6px_6px_0_#000] md:left-auto md:right-0">
+            <div className="absolute right-0 z-40 mt-2 w-64 max-w-[calc(100vw-1rem)] border-4 border-black bg-white p-2 shadow-[6px_6px_0_#000]">
               <p className="border-b-4 border-black p-2 text-sm font-bold">{currentUser?.email}</p>
               <Link to="/settings" onClick={() => setProfileOpen(false)} className="mt-2 block border-4 border-black bg-yellow-300 px-3 py-2 font-bold">Account preferences</Link>
               <button onClick={async () => { setProfileOpen(false); await logout(); }} className="mt-2 flex w-full items-center gap-2 border-4 border-black bg-white px-3 py-2 font-bold"><FaRightFromBracket /> Log out</button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { useAuth } from '../hooks/useAuth';
 
@@ -15,6 +15,17 @@ export default function SettingsPage() {
     avatarPosX: Number(currentUser?.avatarPosX ?? 50),
     avatarPosY: Number(currentUser?.avatarPosY ?? 50)
   });
+
+  useEffect(() => {
+    setProfile({
+      name: currentUser?.name || '',
+      sex: currentUser?.sex || '',
+      age: currentUser?.age || '',
+      avatarUrl: currentUser?.avatarUrl || '',
+      avatarPosX: Number(currentUser?.avatarPosX ?? 50),
+      avatarPosY: Number(currentUser?.avatarPosY ?? 50)
+    });
+  }, [currentUser]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -50,6 +61,7 @@ export default function SettingsPage() {
     <Layout title="Settings" subtitle="Account preferences" showAdd={false}>
       <section className="mb-5 max-w-xl border-4 border-black bg-white p-4 shadow-[6px_6px_0_#000]">
         <h3 className="text-xl font-black">Personal Details</h3>
+        <p className="mt-1 text-sm font-semibold">{currentUser?.email}</p>
         <div className="mt-4 flex flex-col items-center">
           <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-black bg-slate-100">
             {profile.avatarUrl ? <img src={profile.avatarUrl} alt="Profile" className="h-full w-full object-cover" style={{ objectPosition: `${profile.avatarPosX}% ${profile.avatarPosY}%` }} /> : null}
