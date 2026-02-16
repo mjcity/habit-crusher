@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaBars, FaPlus, FaRightFromBracket, FaUser } from 'react-icons/fa6';
+import { FaBars, FaPlus, FaRightFromBracket } from 'react-icons/fa6';
 import { useAuth } from '../hooks/useAuth';
 
 export default function Header({ onAdd, onToggleMobileMenu, title, subtitle, showAdd = true }) {
@@ -22,7 +22,9 @@ export default function Header({ onAdd, onToggleMobileMenu, title, subtitle, sho
 
         <div className="relative">
           <button onClick={() => setProfileOpen((v) => !v)} className="flex items-center gap-2 border-4 border-black bg-white px-3 py-2 shadow-[4px_4px_0_#000]" aria-label="Open profile menu">
-            <FaUser />
+            <div className="h-6 w-6 overflow-hidden rounded-full border-2 border-black bg-white">
+              {currentUser?.avatarUrl ? <img src={currentUser.avatarUrl} alt="Profile" className="h-full w-full object-cover" style={{ objectPosition: `${Number(currentUser?.avatarPosX ?? 50)}% ${Number(currentUser?.avatarPosY ?? 50)}%` }} /> : null}
+            </div>
             <span className="hidden max-w-[180px] truncate md:inline">{currentUser?.name}</span>
           </button>
           {profileOpen && (
