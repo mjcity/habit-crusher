@@ -94,7 +94,7 @@ export default function DashboardPage() {
               <article key={habit.id} className={`border-4 border-black p-4 shadow-[6px_6px_0_#000] ${colors[habit.color] || colors.yellow}`}>
                 <h4 className="text-xl font-black">{habit.name}</h4>
                 {details.description && <p className="mb-1 font-semibold">{details.description}</p>}
-                {details.targetDate && <p className="mb-1 text-sm font-bold">Target Date: {details.targetDate}</p>}
+                <p className="mb-1 text-sm font-bold">Target Date: {details.targetDate || 'Not set'}</p>
                 <p className="font-bold">Current Streak: {habit.streakCount}</p>
                 <p className="font-bold">Best Streak: {habit.bestStreak}</p>
                 <p className="font-bold">Progress: {Number(details.progress || 0)}%</p>
@@ -148,8 +148,9 @@ export default function DashboardPage() {
             </select>
 
             <input value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Habit description / notes" className="mt-3 w-full border-4 border-black px-3 py-2" />
-            <label className="mt-3 block text-sm font-black">Target End Date</label>
-            <input type="date" value={form.targetDate} onChange={(e) => setForm((p) => ({ ...p, targetDate: e.target.value }))} className="mt-1 h-12 w-full max-w-full appearance-none border-4 border-black bg-white px-3 py-2" />
+            <label className="mt-3 block bg-yellow-200 px-2 py-1 text-sm font-black text-black">Target End Date</label>
+            <input type="date" value={form.targetDate} onChange={(e) => setForm((p) => ({ ...p, targetDate: e.target.value }))} className="mt-1 h-12 w-full max-w-full appearance-none border-4 border-black bg-white px-3 py-2 text-black" />
+            <p className="mt-1 text-xs font-bold text-black">{form.targetDate ? `Selected: ${form.targetDate}` : 'No date selected yet — tap field to pick one.'}</p>
             {editingId && <button type="button" onClick={() => navigate(`/calendar?habit=${editingId}`)} className="mt-3 w-full border-4 border-black bg-yellow-200 px-3 py-2 font-black">Open Calendar for this Habit</button>}
 
             {editingId && (
